@@ -673,21 +673,17 @@ impl From<SocketAddr> for Addr {
     fn from(value: SocketAddr) -> Self {
         match value {
             SocketAddr::V4(_) => Self::Ip(value),
-            SocketAddr::V6(addr) => {
-                Self::Ip(SocketAddr::new(addr.ip().to_canonical(), addr.port()))
-            }
+            SocketAddr::V6(addr) => match addr.ip().to_ipv4_mapped() {
+                Some(ip) => Self::Ip(SocketAddr::new(ip.into(), addr.port())),
+                None => Self::Ip(value),
+            },
         }
     }
 }
 
 impl From<&SocketAddr> for Addr {
     fn from(value: &SocketAddr) -> Self {
-        match value {
-            SocketAddr::V4(_) => Self::Ip(*value),
-            SocketAddr::V6(addr) => {
-                Self::Ip(SocketAddr::new(addr.ip().to_canonical(), addr.port()))
-            }
-        }
+        value.clone().into()
     }
 }
 
